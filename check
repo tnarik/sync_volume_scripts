@@ -1,50 +1,123 @@
 #!/usr/bin/env bash
-ORIG_VOLUME='Apps_and_content'
-DEST_VOLUME='frøhvelv'
-DEST_VOLUMES[1]='frøhvelv'
+## Volumes to sync
+ORIG_VOLUME='frø'
+DEST_VOLUMES[0]='/'
+DEST_VOLUMES[1]='Macintosh HD'
 
-if [ $# -eq 1 ]; then
-  DEST_VOLUME=${DEST_VOLUMES[$1]}
-fi
-if [ -z ${DEST_VOLUME} ]; then
-  echo "PLEASE USE ONE OF THE FOLLOWING PARAMETERS (or NO PARAMETER for [1])"
-  for i in $(seq ${#DEST_VOLUMES[@]}); do
+## Assets to sync
+# FILES[1]='README.md'
+# FOLDERSOLD[1]='music'
+# FOLDERSOLD[2]='photo_bank'
+# FOLDERSOLD[3]='flickr_backup'
+# FOLDERSOLD[4]='flickr_backup_desktop'
+# FOLDERSOLD[5]='podcasts'
+# FOLDERSOLD[6]='Wintermute_backup'
+FILES_0=()
+FOLDERS_0=(
+'music'
+'photo_bank'
+'flickr_backup'
+'flickr_backup_desktop'
+'podcasts'
+'Wintermute_backup'
+'test'
+)
+
+FILES_1=(
+'test.md'
+)
+FOLDERS_1=(
+'music'
+'test'
+)
+
+
+FILALL=(FILES_0 FILES_1)
+FALL=(FOLDERS_0 FOLDERS_1)
+
+## Usage and common code
+# flags
+REVERSE=0
+NOOP=0
+
+usage () {
+  printf "Usage: $(basename $0) [-n] [-r]
+          -n : no operation (just check)
+          -r : reverse (current volume becomes the destination)
+"
+}
+
+while getopts ":rn" arg; do
+  case $arg in
+  r)
+    REVERSE=1
+  ;;
+  n)
+    NOOP=1
+  ;;
+  *) 
+    usage
+    exit 127
+  ;;
+  esac
+done
+shift $(($OPTIND -1))
+
+# Select destination volume
+SELECTED_DEST_VOLUME=$([ $# -ge 1 ] && printf $1 || printf 0)
+echo ${SELECTED_DEST_VOLUME}
+DEST_VOLUME=${DEST_VOLUMES[$SELECTED_DEST_VOLUME]}
+echo ${DEST_VOLUME}
+# exit 2
+
+# Select destination volume
+# if [ $# -eq 0 ]; then
+#   DEST_VOLUME=${DEST_VOLUMES[0]}
+# fi
+# if [ $# -ge 1 ]; then
+#   DEST_VOLUME=${DEST_VOLUMES[$1]}
+# fi
+
+# Check destination volume
+if [ -z "${DEST_VOLUME}" ]; then
+  echo "PLEASE USE ONE OF THE FOLLOWING IDs (or NO ID for [0])"
+  for i in $(seq 0 1 $((${#DEST_VOLUMES[@]} -1)) ); do
    echo "- ${i} for ${DEST_VOLUMES[i]}"
   done
   exit 1
 fi
-if [ ! -d /Volumes/${DEST_VOLUME} ]; then
+if [ ! -d "/Volumes/${DEST_VOLUME}" ]; then
   echo "VOLUME '${DEST_VOLUME}' is not mounted. PLEASE DO SO."
   exit 2
 fi
 
+# Start process
 echo "USING volume '${DEST_VOLUME}'"
 
-FILES[1]='README.md'
 
-FOLDERS[1]='music'
-FOLDERS[2]='photo_bank'
-FOLDERS[3]='courses'    
-FOLDERS[4]='harddrive_tools'
-FOLDERS[5]='machine_learning_models'
-FOLDERS[6]='packages'
-FOLDERS[7]='vms'
-FOLDERS[8]='data_projects'
-FOLDERS[9]='installation_packages'
-FOLDERS[10]='work_projects'
-FOLDERS[11]='game_projects'
-FOLDERS[12]='vms_sources'
-FOLDERS[13]='dev_projects'
+# printf "\n\n\n\n"
+# printf '%s\n' ${FALL[@]}
 
-echo "CHECKING backup from '${ORIG_VOLUME}' to '${DEST_VOLUME}'"
-for i in $(seq 1 1 ${#FILES[@]} 2>/dev/null); do
-  echo "> ${FILES[i]}"
-  rsync -aiun ./${FILES[i]} /Volumes/${DEST_VOLUME} --delete --exclude-from=./rsync_exclude
+declare -n FILES="${FILALL[${SELECTED_DEST_VOLUME}]}"
+declare -n FOLDERS="${FALL[${SELECTED_DEST_VOLUME}]}"
+
+printf "\nfiles ---\n"
+printf '%s\n' ${FILES[@]}
+printf "\nfolders ---\n"
+printf '%s\n' ${FOLDERS[@]}
+
+
+ACTION=$([ $NOOP -eq 1 ] && printf "CHECKING" || printf "UPDATING")
+printf "${ACTION} backup from '${ORIG_VOLUME}' to '${DEST_VOLUME}'\n"
+# TODO : REMOVE THE ECHO SO THAT OPERATIONS REALLY TAKE PLACE
+for i in $(seq 0 1 $((${#FILES[@]} -1)) 2>/dev/null); do
+  printf "> ${FILES[i]}  -> "
+  echo rsync -aiun ./${FILES[i]} /Volumes/${DEST_VOLUME} --delete --exclude-from=./rsync_exclude
 done
 
-for i in $(seq 1 1 ${#FOLDERS[@]} 2>/dev/null); do
-  echo "> ${FOLDERS[i]}"
-  rsync -aiun ./${FOLDERS[i]}/ /Volumes/${DEST_VOLUME}/${FOLDERS[i]}/ --delete --exclude-from=./rsync_exclude
+for i in $(seq 0 1 $((${#FOLDERS[@]} -1)) 2>/dev/null); do
+  printf "> ${FOLDERS[i]}  -> "
+  echo rsync -aiun ./${FOLDERS[i]}/ /Volumes/${DEST_VOLUME}/${FOLDERS[i]}/ --delete --exclude-from=./rsync_exclude
 done
 
 
