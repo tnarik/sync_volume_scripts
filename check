@@ -1,17 +1,10 @@
 #!/usr/bin/env bash
 ## Volumes to sync
 ORIG_VOLUME='frø'
-DEST_VOLUMES[0]='/'
+DEST_VOLUMES[0]='.'
 DEST_VOLUMES[1]='Macintosh HD'
 
-## Assets to sync
-# FILES[1]='README.md'
-# FOLDERSOLD[1]='music'
-# FOLDERSOLD[2]='photo_bank'
-# FOLDERSOLD[3]='flickr_backup'
-# FOLDERSOLD[4]='flickr_backup_desktop'
-# FOLDERSOLD[5]='podcasts'
-# FOLDERSOLD[6]='Wintermute_backup'
+## Assets to sync (per Destination Volume)
 FILES_0=()
 FOLDERS_0=(
 'music'
@@ -20,22 +13,20 @@ FOLDERS_0=(
 'flickr_backup_desktop'
 'podcasts'
 'Wintermute_backup'
-'test'
 )
 
 FILES_1=(
-'test.md'
+'README.md'
 )
 FOLDERS_1=(
 'music'
 'test'
 )
 
+FILES_ALL=(FILES_0 FILES_1)
+FOLDERS_ALL=(FOLDERS_0 FOLDERS_1)
 
-FILALL=(FILES_0 FILES_1)
-FALL=(FOLDERS_0 FOLDERS_1)
-
-## Usage and common code
+## Common code
 # flags
 REVERSE=0
 NOOP=0
@@ -65,18 +56,7 @@ shift $(($OPTIND -1))
 
 # Select destination volume
 SELECTED_DEST_VOLUME=$([ $# -ge 1 ] && printf $1 || printf 0)
-echo ${SELECTED_DEST_VOLUME}
 DEST_VOLUME=${DEST_VOLUMES[$SELECTED_DEST_VOLUME]}
-echo ${DEST_VOLUME}
-# exit 2
-
-# Select destination volume
-# if [ $# -eq 0 ]; then
-#   DEST_VOLUME=${DEST_VOLUMES[0]}
-# fi
-# if [ $# -ge 1 ]; then
-#   DEST_VOLUME=${DEST_VOLUMES[$1]}
-# fi
 
 # Check destination volume
 if [ -z "${DEST_VOLUME}" ]; then
@@ -91,16 +71,15 @@ if [ ! -d "/Volumes/${DEST_VOLUME}" ]; then
   exit 2
 fi
 
-# Start process
+
+## Start process
 echo "USING volume '${DEST_VOLUME}'"
 
+# Select specific set of assets
+declare -n FILES="${FILES_ALL[${SELECTED_DEST_VOLUME}]}"
+declare -n FOLDERS="${FOLDERS_ALL[${SELECTED_DEST_VOLUME}]}"
 
-# printf "\n\n\n\n"
-# printf '%s\n' ${FALL[@]}
-
-declare -n FILES="${FILALL[${SELECTED_DEST_VOLUME}]}"
-declare -n FOLDERS="${FALL[${SELECTED_DEST_VOLUME}]}"
-
+# TODO: remove this debugging
 printf "\nfiles ---\n"
 printf '%s\n' ${FILES[@]}
 printf "\nfolders ---\n"
@@ -111,12 +90,12 @@ ACTION=$([ $NOOP -eq 1 ] && printf "CHECKING" || printf "UPDATING")
 printf "${ACTION} backup from '${ORIG_VOLUME}' to '${DEST_VOLUME}'\n"
 # TODO : REMOVE THE ECHO SO THAT OPERATIONS REALLY TAKE PLACE
 for i in $(seq 0 1 $((${#FILES[@]} -1)) 2>/dev/null); do
-  printf "> ${FILES[i]}  -> "
+  printf "> ${FILES[i]}\n"
   echo rsync -aiun ./${FILES[i]} /Volumes/${DEST_VOLUME} --delete --exclude-from=./rsync_exclude
 done
 
 for i in $(seq 0 1 $((${#FOLDERS[@]} -1)) 2>/dev/null); do
-  printf "> ${FOLDERS[i]}  -> "
+  printf "> ${FOLDERS[i]}\n"
   echo rsync -aiun ./${FOLDERS[i]}/ /Volumes/${DEST_VOLUME}/${FOLDERS[i]}/ --delete --exclude-from=./rsync_exclude
 done
 
