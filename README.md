@@ -17,7 +17,9 @@ The script relies on `rsync` and `bash` (although the code is meant to be POSIX 
 
 # Usage
 
-Just copy the script in the desired source harddrive(s), configure `DEST_VOLUMES`, `FILES_*`, `FOLDERS_*`
+Copy the script in the desired source harddrive(s), configure `DEST_VOLUMES`, `FILES_*`, `FOLDERS_*`
 and the overall `FILES_ALL` and `FOLDERS_ALL`.
+
+Copy the `rsync_exclude` file at the same level (or create an empty one). This takes care of ignoring purely temporary files better managed by the OS (folder locations, etc.).
 
 Run at your pleasure (or better yet, set some automation or at least a reminder).
