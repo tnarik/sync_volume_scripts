@@ -1,0 +1,10 @@
+.DS_Store
+.Trashes
+.TemporaryItems
+.DocumentRevisions-V100
+.Spotlight-V100
+.com.apple.timemachine.donotpresent
+.fseventsd
+
+/rsync_exclude
+/syncvol

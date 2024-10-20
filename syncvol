@@ -34,7 +34,7 @@ REVERSE=0
 NOOP=0
 
 usage () {
-  printf "Usage: $(basename $0) [-n] [-r]
+  printf "Usage: $(basename $0) [-n] [-r] <Volume ID>
           -n : no operation (just check)
           -r : reverse (current volume becomes the destination)
 "
@@ -81,24 +81,33 @@ echo "USING volume '${DEST_VOLUME}'"
 declare -n FILES="${FILES_ALL[${SELECTED_DEST_VOLUME}]}"
 declare -n FOLDERS="${FOLDERS_ALL[${SELECTED_DEST_VOLUME}]}"
 
-# TODO: remove this debugging
-printf "\nfiles ---\n"
-printf '%s\n' ${FILES[@]}
-printf "\nfolders ---\n"
-printf '%s\n' ${FOLDERS[@]}
+# # TODO: remove this debugging
+# printf "\nfiles ---\n"
+# printf '%s\n' ${FILES[@]}
+# printf "\nfolders ---\n"
+# printf '%s\n' ${FOLDERS[@]}
+
+ACTION_MSG=$([ $NOOP -eq 1 ] && printf "CHECKING" || printf "UPDATING")
+ACTION_RSYNC_PARAM=$([ $NOOP -eq 1 ] && printf '%s' "-aiun" || printf '%s' "-aivu")
+
+if [ $REVERSE -eq 1 ]; then
+  if [ $NOOP -ne 1 ]; then
+    printf "REVERSE mode cannot be used except for no-op\n"
+    exit 1
+  fi
+  TEMP_VOLUME=${ORIG_VOLUME}
+  ORIG_VOLUME=${DEST_VOLUME}
+  DEST_VOLUME=${TEMP_VOLUME}
+fi
 
 
-ACTION=$([ $NOOP -eq 1 ] && printf "CHECKING" || printf "UPDATING")
-printf "${ACTION} backup from '${ORIG_VOLUME}' to '${DEST_VOLUME}'\n"
-# TODO : REMOVE THE ECHO SO THAT OPERATIONS REALLY TAKE PLACE
+printf "${ACTION_MSG} backup from '${ORIG_VOLUME}' to '${DEST_VOLUME}'\n"
 for i in $(seq 0 1 $((${#FILES[@]} -1)) 2>/dev/null); do
   printf "> ${FILES[i]}\n"
-  echo rsync -aiun ./${FILES[i]} /Volumes/${DEST_VOLUME} --delete --exclude-from=./rsync_exclude
+  rsync ${ACTION_RSYNC_PARAM} "/Volumes/${ORIG_VOLUME}/${FILES[i]}" "/Volumes/${DEST_VOLUME}" --delete --exclude-from="/Volumes/${ORIG_VOLUME}/rsync_exclude"
 done
 
 for i in $(seq 0 1 $((${#FOLDERS[@]} -1)) 2>/dev/null); do
   printf "> ${FOLDERS[i]}\n"
-  echo rsync -aiun ./${FOLDERS[i]}/ /Volumes/${DEST_VOLUME}/${FOLDERS[i]}/ --delete --exclude-from=./rsync_exclude
+  rsync ${ACTION_RSYNC_PARAM} "/Volumes/${ORIG_VOLUME}/${FOLDERS[i]}/" "/Volumes/${DEST_VOLUME}/${FOLDERS[i]}/" --delete --exclude-from="/Volumes/${ORIG_VOLUME}/rsync_exclude"
 done
-
-
