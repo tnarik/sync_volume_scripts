@@ -13,7 +13,7 @@ This repository goal is to contain a single template script (`syncvol`) that wou
 * reverse checking (if the destination has been updated manually for some reason, such as a trip)
 * backing up
 
-The script relies on `rsync` and `bash` (although the code is meant to be POSIX compatible).
+The script relies on `rsync` (> 3.0 to support progress) and `bash` (although the code is meant to be POSIX compatible).
 
 ## Notes
 

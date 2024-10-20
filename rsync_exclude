@@ -5,6 +5,7 @@
 .Spotlight-V100
 .com.apple.timemachine.donotpresent
 .fseventsd
+.metadata_never_index
 
 /rsync_exclude
 /syncvol

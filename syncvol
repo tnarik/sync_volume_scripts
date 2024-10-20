@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Volumes to sync
-ORIG_VOLUME='frø'
-DEST_VOLUMES[0]='.'
-DEST_VOLUMES[1]='Macintosh HD'
+ORIG_VOLUME='TnaBook'
+DEST_VOLUMES[0]='frø'
+DEST_VOLUMES[1]='TnaPedia'
 
 ## Assets to sync (per Destination Volume)
 FILES_0=()
@@ -20,8 +20,16 @@ FILES_1=(
 'README.md'
 )
 FOLDERS_1=(
+'_harddrive_tools'
+'alignment'
+'comics'
 'music'
-'test'
+'photo_bank'
+'flickr_backup'
+'flickr_backup_desktop'
+'podcasts'
+'Wintermute_backup'
+'Movies'
 )
 
 FILES_ALL=(FILES_0 FILES_1)
@@ -32,21 +40,31 @@ FOLDERS_ALL=(FOLDERS_0 FOLDERS_1)
 # flags
 REVERSE=0
 NOOP=0
+SHOW_STATS=0
+FRESHEN=0
 
 usage () {
-  printf "Usage: $(basename $0) [-n] [-r] <Volume ID>
+  printf "Usage: $(basename $0) [-n] [-r] [-s] [-f] <Volume ID>
           -n : no operation (just check)
           -r : reverse (current volume becomes the destination)
+          -s : show stats after every transfer
+          -f : freshen up files (do NOT use -u in rsync)
 "
 }
 
-while getopts ":rn" arg; do
+while getopts ":rnsf" arg; do
   case $arg in
   r)
     REVERSE=1
   ;;
   n)
     NOOP=1
+  ;;
+  s)
+    SHOW_STATS=1
+  ;;
+  f)
+    FRESHEN=1
   ;;
   *) 
     usage
@@ -81,33 +99,29 @@ echo "USING volume '${DEST_VOLUME}'"
 declare -n FILES="${FILES_ALL[${SELECTED_DEST_VOLUME}]}"
 declare -n FOLDERS="${FOLDERS_ALL[${SELECTED_DEST_VOLUME}]}"
 
-# # TODO: remove this debugging
-# printf "\nfiles ---\n"
-# printf '%s\n' ${FILES[@]}
-# printf "\nfolders ---\n"
-# printf '%s\n' ${FOLDERS[@]}
-
 ACTION_MSG=$([ $NOOP -eq 1 ] && printf "CHECKING" || printf "UPDATING")
-ACTION_RSYNC_PARAM=$([ $NOOP -eq 1 ] && printf '%s' "-aiun" || printf '%s' "-aivu")
+ACTION_RSYNC_PARAM=$([ $NOOP -eq 1 ] && printf '%s' "-ain --info=progress2" || printf '%s' "-ai --info=progress2")
+ACTION_RSYNC_PARAM_STATS=$([ $SHOW_STATS -eq 1 ] && printf '%s' "--stats" || printf '%s' "")
+ACTION_RSYNC_PARAM_FRESHEN=$([ $FRESHEN -eq 1 ] && printf '%s' "" || printf '%s' "-u")
 
+MAIN_VOLUME=${ORIG_VOLUME}
 if [ $REVERSE -eq 1 ]; then
   if [ $NOOP -ne 1 ]; then
     printf "REVERSE mode cannot be used except for no-op\n"
     exit 1
   fi
-  TEMP_VOLUME=${ORIG_VOLUME}
   ORIG_VOLUME=${DEST_VOLUME}
-  DEST_VOLUME=${TEMP_VOLUME}
+  DEST_VOLUME=${MAIN_VOLUME}
 fi
 
 
 printf "${ACTION_MSG} backup from '${ORIG_VOLUME}' to '${DEST_VOLUME}'\n"
 for i in $(seq 0 1 $((${#FILES[@]} -1)) 2>/dev/null); do
   printf "> ${FILES[i]}\n"
-  rsync ${ACTION_RSYNC_PARAM} "/Volumes/${ORIG_VOLUME}/${FILES[i]}" "/Volumes/${DEST_VOLUME}" --delete --exclude-from="/Volumes/${ORIG_VOLUME}/rsync_exclude"
+  rsync ${ACTION_RSYNC_PARAM} ${ACTION_RSYNC_PARAM_FRESHEN} ${ACTION_RSYNC_PARAM_STATS} "/Volumes/${ORIG_VOLUME}/${FILES[i]}" "/Volumes/${DEST_VOLUME}" --delete --exclude-from="/Volumes/${MAIN_VOLUME}/rsync_exclude"
 done
 
 for i in $(seq 0 1 $((${#FOLDERS[@]} -1)) 2>/dev/null); do
   printf "> ${FOLDERS[i]}\n"
-  rsync ${ACTION_RSYNC_PARAM} "/Volumes/${ORIG_VOLUME}/${FOLDERS[i]}/" "/Volumes/${DEST_VOLUME}/${FOLDERS[i]}/" --delete --exclude-from="/Volumes/${ORIG_VOLUME}/rsync_exclude"
+  rsync ${ACTION_RSYNC_PARAM} ${ACTION_RSYNC_PARAM_FRESHEN} ${ACTION_RSYNC_PARAM_STATS} "/Volumes/${ORIG_VOLUME}/${FOLDERS[i]}/" "/Volumes/${DEST_VOLUME}/${FOLDERS[i]}/" --delete --exclude-from="/Volumes/${MAIN_VOLUME}/rsync_exclude"
 done
