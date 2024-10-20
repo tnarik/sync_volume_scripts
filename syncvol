@@ -100,7 +100,7 @@ declare -n FILES="${FILES_ALL[${SELECTED_DEST_VOLUME}]}"
 declare -n FOLDERS="${FOLDERS_ALL[${SELECTED_DEST_VOLUME}]}"
 
 ACTION_MSG=$([ $NOOP -eq 1 ] && printf "CHECKING" || printf "UPDATING")
-ACTION_RSYNC_PARAM=$([ $NOOP -eq 1 ] && printf '%s' "-ain --info=progress2" || printf '%s' "-ai --info=progress2")
+ACTION_RSYNC_PARAM=$([ $NOOP -eq 1 ] && printf '%s' "-aiOn --info=progress2" || printf '%s' "-aiO --info=progress2")
 ACTION_RSYNC_PARAM_STATS=$([ $SHOW_STATS -eq 1 ] && printf '%s' "--stats" || printf '%s' "")
 ACTION_RSYNC_PARAM_FRESHEN=$([ $FRESHEN -eq 1 ] && printf '%s' "" || printf '%s' "-u")
 
